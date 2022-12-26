@@ -1,3 +1,4 @@
+import argparse
 import random
 from pysid import SID
 
@@ -46,6 +47,27 @@ for i in range(8):
     # Move to the next measure
     time += 4
 
-# Write the SID file to disk
-with open("ambient.sid", "wb") as output_file:
+    
+# Create an ArgumentParser object
+parser = argparse.ArgumentParser()
+
+# Add an argument for the filename
+parser.add_argument("filename", help="The name of the SID file")
+
+# Parse the command-line arguments
+args = parser.parse_args()
+
+# Get the filename from the command-line arguments
+filename = args.filename
+
+
+# Save the output data to the file
+with open(filename + ".sid", "wb") as output_file:
     output_file.write(sid.save())
+    
+# Write the SID file to disk 
+with open("static.sid", "wb") as output_file:
+    output_file.write(sid.save())
+
+    
+    
