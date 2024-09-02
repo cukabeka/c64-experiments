@@ -245,4 +245,103 @@ parseMarkdown:
 
 4. Markdown-Preview und Verwendung von GEOS-Schriften
 
-	•	Textformatierung: Die Verwendung von GEOS-Schriften und -Stilen ist möglich. Die PRINT-Befehle sollten durch /B, /I, /U etc. ergänzt werden, um verschiedene Schriftstile (Bold, Italic, Underline) zu verwenden. Der aktuelle Code hat dies korrekt berücksichtigt, aber die Logik zur Verarbeitung der Markups könnte erweitert werden, um komplexere Mar
+	•	Textformatierung: Die Verwendung von GEOS-Schriften und -Stilen ist möglich. Die PRINT-Befehle sollten durch /B, /I, /U etc. ergänzt werden, um verschiedene Schriftstile (Bold, Italic, Underline) zu verwenden. Der aktuelle Code hat dies korrekt berücksichtigt, aber die Logik zur Verarbeitung der Markups könnte erweitert werden.
+
+
+
+# Optimierungs-Ansätze
+
+In der aktuellen Implementierung des geoCom Markdown Editors wird `SYSDIALOG` verwendet, um Dialogboxen zum Laden und Speichern von Dateien zu öffnen. Dies ist jedoch nicht unbedingt die einzige oder beste Methode. Es gibt Unterschiede zwischen `SYSDIALOG` und `OPENBOX`, die du kennen solltest:
+
+## Unterschiede zwischen `SYSDIALOG` und `OPENBOX`
+
+- **SYSDIALOG:**
+  - `SYSDIALOG` wird verwendet, um eine Systemdialogbox zu öffnen, die in der Regel vordefinierte, standardisierte Dialoge darstellt, wie z.B. Dateiauswahl, Speichern oder Bestätigungsdialoge.
+  - `SYSDIALOG` ist nützlich, wenn du schnell eine einfache Dialogbox benötigst, die mit minimalem Aufwand funktioniert.
+  - Diese Methode ist besonders praktisch, wenn du das Standardverhalten des Systems für Dialoge beibehalten möchtest.
+
+- **OPENBOX:**
+  - `OPENBOX` bietet mehr Flexibilität und Kontrolle über die Darstellung und Funktionalität der Dialogbox. 
+  - Mit `OPENBOX` kannst du eine benutzerdefinierte Dateiauswahl-Box erstellen, in der du bestimmen kannst, welche Dateien angezeigt werden und wie sie angezeigt werden.
+  - `OPENBOX` ist nützlich, wenn du eine spezifische Benutzererfahrung schaffen möchtest, die über die Standarddialoge hinausgeht.
+
+### Wann `OPENBOX` besser geeignet wäre
+In deinem Markdown Editor könnte `OPENBOX` besser geeignet sein, wenn du mehr Kontrolle darüber haben möchtest, welche Dateien im Dialog angezeigt werden und wie der Auswahlprozess abläuft. Beispielsweise könntest du eine benutzerdefinierte Dateiauswahl implementieren, die nur Markdown-Dateien anzeigt oder spezifische Filter oder Sortierungen verwendet.
+
+### Beispiel für die Verwendung von `OPENBOX`
+
+Hier ist ein Beispiel, wie `OPENBOX` anstelle von `SYSDIALOG` verwendet werden könnte:
+
+```geoCom
+loadFile:
+    ` Open custom load dialog
+    OPENBOX 1, 1, 10, 20, "Load Markdown File", "Load", "Cancel"
+    IF DIALOGRESULT = 0 THEN RETURN  ` User cancelled
+    filename = DIALOGINPUT
+    
+    ` Open file for reading
+    OPEN filename FOR INPUT
+    IF SYSERROR <> 0 THEN PRINT "Error opening file" RETURN
+    
+    ` Read file contents into inputText
+    inputText = ""
+    WHILE NOT EOF(1)
+        LINE INPUT #1, line$
+        inputText = inputText + line$ + CHR(13)
+    WEND
+    CLOSE
+    
+    GOSUB updateTextArea
+    PRINT "File loaded successfully"
+    RETURN
+```
+
+### Fazit
+Die Entscheidung zwischen `SYSDIALOG` und `OPENBOX` hängt von den Anforderungen ab. `SYSDIALOG` ist einfacher und schneller zu implementieren, bietet aber weniger Flexibilität. `OPENBOX` erfordert mehr Code, bietet aber eine maßgeschneiderte Lösung. Wenn du die Dev-Erfahrung anpassen möchtest, wäre `OPENBOX` die bessere Wahl.
+
+## Weitere Code-Alterntaiven
+
+Hier sind einige Stellen im Code, an denen alternative geoCom-Befehle in Betracht gezogen werden könnten, um Effizienz, Flexibilität oder Benutzerfreundlichkeit zu verbessern:
+
+### 1. **SYSGRAPHICS**
+   - **Aktueller Befehl:** `SYSGRAPHICS`
+   - **Alternative:** `GRAPHICS ON`
+   - **Erklärung:** Der Befehl `SYSGRAPHICS` schaltet die Grafikausgabe im System ein, was für einfache grafische Anwendungen geeignet ist. Wenn du jedoch spezifische Kontrolle über die Grafikausgabe benötigst, könnte der Befehl `GRAPHICS ON` zusammen mit spezifischen Grafikeinstellungen besser geeignet sein. Dadurch hast du mehr Kontrolle über die Grafikeinstellungen, wie z.B. Farbpaletten und Bildschirmmodi.
+
+### 2. **SYSEVENT**
+   - **Aktueller Befehl:** `SYSEVENT`
+   - **Alternative:** `WAIT`
+   - **Erklärung:** Der Befehl `SYSEVENT` wird verwendet, um auf Systemereignisse wie Tastendrücke oder Mausklicks zu warten. Eine Alternative könnte der Befehl `WAIT` sein, der ebenfalls auf ein Ereignis wartet, aber möglicherweise in bestimmten Situationen effizienter ist, da er weniger Systemressourcen beansprucht. `WAIT` kann auch in Kombination mit `KEY` verwendet werden, um explizit auf Tastendrücke zu warten.
+
+### 3. **TEXT-Rendering**
+   - **Aktueller Befehl:** `PRINT`
+   - **Alternative:** `DISPLAY`, `PRINT AT`
+   - **Erklärung:** Der Befehl `PRINT` wird verwendet, um Text an die aktuelle Cursorposition zu drucken. In einigen Fällen könnte `DISPLAY` oder `PRINT AT x, y` besser geeignet sein, um Text an einer bestimmten Position auszugeben, besonders wenn du präzise Kontrolle über die Platzierung des Textes benötigst.
+
+### 4. **MARKIEREN UND KOPIEREN**
+   - **Aktueller Befehl:** Es gibt keinen spezifischen Befehl für Textmarkierung und Kopieren, der im Code verwendet wird.
+   - **Alternative:** `SELECT`, `COPYTEXT`, `PASTETEXT`
+   - **Erklärung:** Wenn du Textmarkierung, Kopieren und Einfügen implementieren möchtest, könnten spezifische Befehle wie `SELECT`, `COPYTEXT` und `PASTETEXT` verwendet werden, um diese Aktionen effizienter und benutzerfreundlicher zu gestalten.
+
+### 5. **STRING-MANIPULATION**
+   - **Aktueller Befehl:** `MID`, `LEFT`, `RIGHT`
+   - **Alternative:** `INSERT`, `DELETE`
+   - **Erklärung:** Für das Einfügen oder Löschen von Text innerhalb einer Zeichenkette könnten `INSERT` und `DELETE` besser geeignet sein, da diese Befehle spezifische Operationen ausführen, ohne die gesamte Zeichenkette neu zu berechnen. Dies könnte die Effizienz bei komplexen String-Manipulationen verbessern.
+
+### 6. **DIALOGAUSWAHL**
+   - **Aktueller Befehl:** `SYSDIALOG`
+   - **Alternative:** `OPENBOX`, `GETFILE`
+   - **Erklärung:** Wie bereits besprochen, bietet `OPENBOX` mehr Flexibilität bei der Dateiauswahl, und `GETFILE` könnte verwendet werden, wenn du eine spezifische Datei vom Benutzer auswählen lassen möchtest, wobei nur eine Dateiart angezeigt wird.
+
+### 7. **FEHLERBEHANDLUNG**
+   - **Aktueller Befehl:** `IF SYSERROR <> 0 THEN`
+   - **Alternative:** `ERROR`, `ONERROR`
+   - **Erklärung:** Für eine robustere Fehlerbehandlung könntest du `ERROR` oder `ONERROR` verwenden, um gezielt auf verschiedene Fehlertypen zu reagieren und gegebenenfalls spezifische Fehlerbehandlungsroutinen zu definieren. Diese Befehle ermöglichen eine detailliertere und flexiblere Fehlerbehandlung, besonders in komplexeren Anwendungen.
+
+### 8. **SPEICHER UND VARIABLEN**
+   - **Aktueller Befehl:** `STRVAR 254; inputText`
+   - **Alternative:** `DIM`, `ALLOCATE`
+   - **Erklärung:** Bei der Verwaltung großer Datenmengen oder wenn du dynamisch Speicher für Variablen zuweisen musst, könnten `DIM` für Arrays oder `ALLOCATE` für Speicherzellen eine bessere Wahl sein. Diese Befehle ermöglichen eine präzisere Speicherverwaltung und können die Leistung bei komplexeren Datenstrukturen verbessern.
+
+### Zusammenfassung:
+Durch die Wahl besser geeigneter Befehle in geoCom kannst du die Effizienz, Flexibilität und Benutzerfreundlichkeit deines Markdown Editors erheblich verbessern. Die genannten Alternativen bieten dir mehr Kontrolle und können in spezifischen Anwendungsfällen besser funktionieren. Es lohnt sich, diese Alternativen in deinem Code zu prüfen und gegebenenfalls anzuwenden, um die bestmögliche Leistung und Benutzererfahrung zu erzielen.
