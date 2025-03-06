@@ -97,6 +97,102 @@ POKE (sid + 22), filter ` Filtermodus
 RETURN
 ```
 
+### Version mit korrekten IO-Befehlen
+
+```geoCom
+` SID-Maus-Klang-Interface
+` Definition Section
+NAME "sid_mouse"
+CLASS "sidmouse    1.0"
+AUTHOR "Grok/xAI"
+
+` Declaration Section
+BYTEVAR mousedata AT $84c0 ` Mausstatus
+BYTEVAR mousex AT $84c1    ` X-Position (low byte)
+BYTEVAR mousey AT $84c3    ` Y-Position
+BYTEVAR voice1_freq, voice1_vol, voice1_wave
+BYTEVAR voice2_freq, voice2_vol, voice2_wave
+BYTEVAR voice3_freq, filter
+LABEL init_sid, update_sound, draw_interface
+
+` SID-Adressen
+BYTEVAR sid_base AT $d400  ` SID-Startadresse
+BYTEVAR sid_freq1_lo AT $d400  ` Stimme 1 Frequenz (low)
+BYTEVAR sid_freq1_hi AT $d401  ` Stimme 1 Frequenz (high)
+BYTEVAR sid_wave1 AT $d404     ` Stimme 1 Wellenform
+BYTEVAR sid_vol AT $d418       ` Master-Lautstärke/Filter
+BYTEVAR sid_freq2_lo AT $d407  ` Stimme 2 Frequenz (low)
+BYTEVAR sid_freq2_hi AT $d408  ` Stimme 2 Frequenz (high)
+BYTEVAR sid_wave2 AT $d40b     ` Stimme 2 Wellenform
+BYTEVAR sid_freq3_lo AT $d40e  ` Stimme 3 Frequenz (low)
+BYTEVAR sid_freq3_hi AT $d40f  ` Stimme 3 Frequenz (high)
+BYTEVAR sid_wave3 AT $d411     ` Stimme 3 Wellenform
+
+` Command Section
+CLS
+MOUSE ON
+GOSUB init_sid
+GOSUB draw_interface
+MAINLOOP
+    GOSUB update_sound
+    WAIT 1 ` Kurze Pause für Stabilität
+END
+
+@init_sid
+` SID zurücksetzen und initialisieren
+INITIO
+POKE sid_vol, 15    ` Maximale Lautstärke, kein Filter
+POKE sid_wave1, 0   ` Stimme 1 aus
+POKE sid_wave2, 0   ` Stimme 2 aus
+POKE sid_wave3, 0   ` Stimme 3 aus
+DONIO
+RETURN
+
+@draw_interface
+` Einfaches Interface mit Bereichen für Stimmen
+FRAME 0, 0, 319, 199, 255  ` Rahmen um den Bildschirm
+SETPOS 10, 10
+PRINT "/BVoice 1: Tonhöhe (X), Lautstärke (Y)";
+SETPOS 10, 20
+PRINT "Voice 2: Tonhöhe (X), Wellenform (Y)";
+SETPOS 10, 30
+PRINT "Voice 3: Tonhöhe (X), Filter (Y)";
+RETURN
+
+@update_sound
+` Mauspositionen lesen und SID-Parameter aktualisieren
+INITIO
+
+` Stimme 1: Tonhöhe (X), Lautstärke (Y)
+voice1_freq = (mousex / 2) ` X: 0-319 -> Frequenz 0-159
+voice1_vol = (mousey / 13) ` Y: 0-199 -> Lautstärke 0-15
+POKE sid_freq1_lo, (voice1_freq AND $ff)
+POKE sid_freq1_hi, (voice1_freq / 256)
+POKE sid_wave1, (17 + voice1_vol) ` Dreieckswelle + Gate + Lautstärke
+
+` Stimme 2: Tonhöhe (X), Wellenform (Y)
+voice2_freq = (mousex / 2)
+voice2_wave = (mousey / 50) ` Y: 0-199 -> Wellenform (0-3: Dreieck, Sägezahn, Rechteck, Rauschen)
+IF (voice2_wave == 0) THEN voice2_wave = 17: ENDIF  ` Dreieck
+IF (voice2_wave == 1) THEN voice2_wave = 33: ENDIF  ` Sägezahn
+IF (voice2_wave == 2) THEN voice2_wave = 65: ENDIF  ` Rechteck
+IF (voice2_wave == 3) THEN voice2_wave = 129: ENDIF ` Rauschen
+POKE sid_freq2_lo, (voice2_freq AND $ff)
+POKE sid_freq2_hi, (voice2_freq / 256)
+POKE sid_wave2, voice2_wave
+
+` Stimme 3: Tonhöhe (X), Filter (Y)
+voice3_freq = (mousex / 2)
+filter = (mousey / 13) ` Y: 0-199 -> Filter 0-15
+POKE sid_freq3_lo, (voice3_freq AND $ff)
+POKE sid_freq3_hi, (voice3_freq / 256)
+POKE sid_wave3, 65 ` Rechteckwelle für Stimme 3
+POKE sid_vol, (15 + (filter * 16)) ` Lautstärke + Low-Pass-Filter
+
+DONIO
+RETURN
+```
+
 ---
 
 ### Erklärung des Programms
