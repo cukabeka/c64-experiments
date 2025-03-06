@@ -533,3 +533,172 @@ RETURN
 - **Fehlerbehandlung**: Der Compiler generiert eine Fehlerliste, aber es gibt keinen interaktiven Debugger.
 - **Hardware**: Keine Unterstützung für uIEC-Laufwerke.
 - **Subroutinen**: Keine Parameter oder Rückgabewerte möglich.
+
+
+
+
+
+
+---
+
+# GEOS-Subroutinen-Referenz für GeoCom
+
+Basierend auf den Informationen aus den GeoCom-Dokumenten (insbesondere den Abschnitten über den `CALL`-Befehl und die GEOS-API) hier eine Referenz für einige wichtige GEOS-Subroutinen, die mit `CALL <addr>` aufgerufen werden können. Diese Referenz ist so gestaltet, dass sie modernen Programmieransätzen entspricht – mit klaren Beschreibungen, möglichen Anwendungsfällen und einem Fokus auf praktische Nutzung. Da die Dokumente keine vollständige Liste aller GEOS-Routinen enthalten, beschränke ich mich auf die explizit erwähnten und ergänze sie mit plausiblen Einsatzmöglichkeiten, die für Programmierer relevant sein könnten.
+
+Der `CALL <addr>`-Befehl in GeoCom ermöglicht den direkten Zugriff auf GEOS-Kernel-Routinen im Speicher des Commodore 64. Diese Routinen bieten Funktionen wie Zufallszahlengenerierung, Grafikmanipulation, Eingabeverarbeitung und mehr. Im Folgenden findest du eine Übersicht der wichtigsten Subroutinen, ihre Adressen, Parameter und moderne Anwendungsfälle.
+
+## Allgemeine Syntax
+```geoCom
+CALL <hex-Adresse>
+```
+- `<hex-Adresse>`: Eine 16-Bit-Adresse im GEOS-Kernel (z. B. `$c187`).
+- Register (A, X, Y) können vor dem Aufruf gesetzt werden, um Parameter zu übergeben.
+- Rückgabewerte landen oft in Registern oder spezifischen Speicheradressen.
+
+## Wichtige GEOS-Subroutinen
+
+### 1. GetRandom (`$c187`)
+- **Beschreibung**: Generiert eine Zufallszahl.
+- **Parameter**: Keine direkten Parameter erforderlich.
+- **Rückgabewert**: 16-Bit-Zufallszahl im Speicher `$850a` (als `random` zugänglich mit `INTVAR random AT $850a`).
+- **Beispiel**:
+  ```geoCom
+  INTVAR random AT $850a
+  CALL $c187
+  PRINT (STR random);
+  ```
+- **Anwendungsfall**:
+  - **Spieleentwicklung**: Würfelwürfe, zufällige Gegnerbewegungen oder Level-Generierung.
+  - **Simulationen**: Zufällige Auswahl von Optionen in interaktiven Anwendungen.
+
+### 2. EnterDesktop (`$c1f9`)
+- **Beschreibung**: Beendet das aktuelle Programm und kehrt zum GEOS-Desktop zurück.
+- **Parameter**: Keine.
+- **Rückgabewert**: Keiner (Programm wird beendet).
+- **Beispiel**:
+  ```geoCom
+  CALL $c1f9
+  ```
+- **Anwendungsfall**:
+  - **Programmsteuerung**: Implementierung eines "Zurück"-Buttons in einer Anwendung.
+  - **Fehlerbehandlung**: Graceful Exit bei ungültiger Benutzereingabe.
+
+### 3. MouseUp (`$c24d`)
+- **Beschreibung**: Setzt den Mauszeigerstatus zurück (Maus wird losgelassen).
+- **Parameter**: Keine direkten Parameter, arbeitet mit `mousedata` (`BYTEVAR mousedata AT $84c0`).
+- **Rückgabewert**: Aktualisiert den Mausstatus im Speicher.
+- **Beispiel**:
+  ```geoCom
+  BYTEVAR mousedata AT $84c0
+  CALL $c24d
+  IF (mousedata AND $80 = 0) THEN PRINT "Maus losgelassen!";
+  ```
+- **Anwendungsfall**:
+  - **UI-Interaktion**: Erkennung des Endes eines Klicks auf eine Schaltfläche.
+  - **Drag-and-Drop**: Abschluss einer Mausaktion in einer grafischen Anwendung.
+
+### 4. RstrScr (`$c13c`)
+- **Beschreibung**: Stellt den Bildschirm aus einem Puffer wieder her (vermutlich für Double-Buffering oder Bildschirmaktualisierung).
+- **Parameter**: Erwartet einen Puffer im Speicher (Details abhängig von der Implementierung).
+- **Rückgabewert**: Keiner direkt, Bildschirm wird aktualisiert.
+- **Beispiel**:
+  ```geoCom
+  CALL $c13c
+  ```
+- **Anwendungsfall**:
+  - **Grafikanwendungen**: Flimmerfreies Zeichnen durch Wiederherstellung eines Offscreen-Buffers.
+  - **Animationen**: Bildschirmaktualisierung für einfache Übergänge.
+
+### 5. InitMouse (`$c24a`)
+- **Beschreibung**: Initialisiert die Maussteuerung (vermutlich für den Start der Mausunterstützung).
+- **Parameter**: Keine direkten Parameter, arbeitet mit GEOS-Mausdaten.
+- **Rückgabewert**: Maus wird aktiviert.
+- **Beispiel**:
+  ```geoCom
+  CALL $c24a
+  MOUSE ON
+  ```
+- **Anwendungsfall**:
+  - **GUI-Entwicklung**: Start einer mausgesteuerten Anwendung.
+  - **Interaktive Tools**: Mausbasierte Zeichenprogramme oder Menüs.
+
+## Arbeiten mit GEOS-Subroutinen
+
+### Vorbereitung
+- **Register setzen**: Verwende `POKE` oder Variablen, um Werte in A, X oder Y vor dem Aufruf zu setzen, falls erforderlich.
+  ```geoCom
+  POKE $fb, 42 ` Beispiel: Wert in Zeropage setzen
+  CALL <addr>
+  ```
+- **Speicherzugriff**: Definiere Variablen an spezifischen Adressen (z. B. `INTVAR random AT $850a`).
+
+### Typische Anforderungen
+1. **Event-Handling**:
+   - Kombiniere `CALL $c24d` mit `mousedata`, um Mausklicks zu verarbeiten.
+   - Beispiel: Schaltflächenklicks oder Drag-and-Drop in einem Editor.
+2. **Grafik**:
+   - Nutze `CALL $c13c` für Bildschirmaktualisierungen in Zeichenprogrammen oder Spielen.
+3. **Zufälligkeit**:
+   - Verwende `CALL $c187` für dynamische Inhalte wie zufällige Level oder NPC-Verhalten.
+4. **Programmfluss**:
+   - `CALL $c1f9` als Exit-Strategie in Menüs oder nach Fehlern.
+
+## Beispiel: Mausbasierter Zufallsgenerator
+
+Dieses Beispiel kombiniert mehrere Subroutinen für eine interaktive Anwendung:
+
+```geoCom
+` Mausbasierter Zufallsgenerator
+NAME "randclick"
+CLASS "randclick   1.0"
+AUTHOR "Cenbe"
+
+` Declaration Section
+BYTEVAR mousedata AT $84c0
+INTVAR random AT $850a
+BYTEVAR clicked
+STRVAR 64; result
+LABEL draw_button, check_click, roll_random
+
+` Command Section
+CLS
+clicked = 0
+CALL $c24a ` Maus initialisieren
+MOUSE ON
+GOSUB draw_button
+MAINLOOP
+
+@draw_button
+FRAME 100, 50, 200, 80, 255
+SETPOS 120, 60
+PRINT "Zufallsgenerator";
+RETURN
+
+@check_click
+IF ((mousedata AND $80) <> 0): RETURN: ENDIF
+IF (REGION 100, 50, 200, 80) THEN
+    clicked = 1
+    GOSUB roll_random
+    CALL $c24d ` Maus zurücksetzen
+ENDIF
+RETURN
+
+@roll_random
+CALL $c187 ` Zufallszahl holen
+result = ("Zufallszahl: " + (STR random))
+RECT 90, 90, 210, 110
+SETPOS 100, 100
+PRINT result;
+RETURN
+```
+
+**Erklärung**:
+- Initialisiert die Maus (`$c24a`).
+- Zeichnet eine Schaltfläche und prüft Mausklicks (`$c24d` für Status).
+- Generiert eine Zufallszahl (`$c187`) und zeigt sie an.
+
+## Hinweise
+- **Dokumentation**: Die vollständige Liste der GEOS-Routinen ist in der offiziellen GEOS-Dokumentation oder Büchern wie "GEOS Inside and Out" zu finden.
+- **Debugging**: Da GeoCom keinen Debugger hat, teste Aufrufe mit `PRINT`-Anweisungen.
+- **Speicher**: Achte auf die Speicherzuweisung, da GEOS-Adressen festgelegt sind.
+
