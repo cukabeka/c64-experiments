@@ -198,3 +198,338 @@ RETURN
 ---
 
 Diese Dokumentation bietet eine moderne, übersichtliche Einführung in GeoCom mit praktischen Beispielen, die sowohl Anfängern als auch erfahrenen GEOS-Entwicklern den Einstieg erleichtern. Sie spiegelt den Stil aktueller Programmierdokumentationen wider, indem sie klare Struktur, Codebeispiele und Erklärungen kombiniert.
+
+
+
+---
+
+# GeoCom-Referenzhandbuch
+
+Willkommen beim GeoCom-Referenzhandbuch, einer umfassenden Dokumentation für die BASIC-ähnliche Programmiersprache GeoCom, die für die GEOS-Umgebung auf dem Commodore 64 entwickelt wurde. Diese Dokumentation bietet detaillierte Informationen zu Syntax, Befehlen, Variablen, Strukturen und Beispielen.
+
+
+## Inhaltsverzeichnis
+
+1. [Einführung](#einführung)
+2. [Programmstruktur](#programmstruktur)
+3. [Variablen und Datentypen](#variablen-und-datentypen)
+4. [Steuerstrukturen](#steuerstrukturen)
+5. [Grafik- und Eingabebefehle](#grafik-und-eingabebefehle)
+6. [GEOS-spezifische Funktionen](#geos-spezifische-funktionen)
+7. [Befehlsreferenz](#befehlsreferenz)
+8. [Beispiele](#beispiele)
+9. [Anmerkungen und Einschränkungen](#anmerkungen-und-einschränkungen)
+
+---
+
+## Einführung
+
+GeoCom ist eine Programmiersprache, die speziell für die Erstellung von GEOS-Anwendungen auf dem Commodore 64 entwickelt wurde. Sie kombiniert BASIC-ähnliche Syntax mit GEOS-spezifischen Funktionen für grafische Benutzeroberflächen, Mausunterstützung und Prozessverwaltung. Programme werden in geoWrite geschrieben und mit dem GeoCom-Compiler in ausführbare GEOS-Anwendungen übersetzt.
+
+---
+
+## Programmstruktur
+
+Jedes GeoCom-Programm besteht aus drei Abschnitten, die in dieser Reihenfolge am Anfang des Quellcodes stehen müssen:
+
+### Definition Section
+Definiert Metadaten des Programms.
+
+- **`NAME <string>`**  
+  Der Name des Programms (max. 16 Zeichen).  
+  Beispiel: `NAME "MyApp"`
+
+- **`CLASS <string>`**  
+  Der Klassenname (max. 10 Zeichen) gefolgt von einem Versionsstring (max. 5 Zeichen).  
+  Beispiel: `CLASS "MyApp     1.0"`
+
+- **`AUTHOR <string>`**  
+  Der Autor des Programms (max. 16 Zeichen).  
+  Beispiel: `AUTHOR "Cenbe"`
+
+### Declaration Section
+Deklariert Variablen, Labels und Objekte.
+
+- **Variablen**: Siehe [Variablen und Datentypen](#variablen-und-datentypen).
+- **Labels**: `LABEL <name>` – Markiert Sprungziele für `GOSUB` oder `GOTO`.  
+  Beispiel: `LABEL myRoutine`
+- **Objekte**: `OBJFILE <filename>` oder `OBJECT <type> <name>` – Für VLIR-Dateien oder GEOS-Objekte.
+
+### Command Section
+Enthält den ausführbaren Code mit Befehlen, Schleifen und Subroutinen.
+
+- Kommentare beginnen mit einem Backquote (\`):  
+  Beispiel: `` ` Dies ist ein Kommentar ``
+
+---
+
+## Variablen und Datentypen
+
+Alle Variablen müssen in der Declaration Section deklariert werden. Lokale Variablen in Subroutinen werden nicht unterstützt.
+
+### Datentypen
+
+- **`INTVAR <name> [AT <address>]`**  
+  16-Bit-Ganzzahl (0 bis 65535). Optional mit fester Speicheradresse.  
+  Beispiel: `INTVAR counter` oder `INTVAR random AT $850a`
+
+- **`BYTEVAR <name> [AT <address>]`**  
+  8-Bit-Ganzzahl (0 bis 255).  
+  Beispiel: `BYTEVAR flag`
+
+- **`STRVAR <length>; <name>`**  
+  Nullterminierter String mit maximaler Länge (1 bis 255 Bytes).  
+  Beispiel: `STRVAR 64; message`
+
+- **`ROW <size> <type> VAR <name>`**  
+  Eindimensionales Array mit `<size>` Elementen (Indizes 0 bis size-1).  
+  Beispiel: `ROW 6 BYTEVAR scores`
+
+### Operationen
+
+- **Zuweisung**: `variable = (expression)`  
+  Beispiel: `x = (y + 5)`
+- **Verketten von Strings**: Mit `+`  
+  Beispiel: `message = ("Hallo " + name)`
+- **Typkonvertierung**: `STR <number>` (zahl zu string)  
+  Beispiel: `text = (STR 42)`
+
+---
+
+## Steuerstrukturen
+
+GeoCom bietet mehrere Möglichkeiten zur Programmsteuerung.
+
+### Bedingungen
+
+- **`IF <condition> THEN`**  
+  Führt einen Block aus, wenn die Bedingung wahr ist. Mit `ENDIF` beendet.  
+  Syntax:  
+  ```
+  IF (x > 5) THEN
+      PRINT "x ist groß";
+  ENDIF
+  ```
+- **Inline-IF**:  
+  `IF <condition>: <statement>: ENDIF`  
+  Beispiel: `IF (flag = 1): PRINT "Flag gesetzt";: ENDIF`
+
+### Schleifen
+
+- **`REPEAT ... UNTIL <condition>`**  
+  Wiederholt einen Block, bis die Bedingung erfüllt ist.  
+  Beispiel:  
+  ```
+  i = 0
+  REPEAT
+      INC i
+  UNTIL (i = 10)
+  ```
+
+- **`WHILE <condition> DO ... LOOP`**  
+  Führt einen Block aus, solange die Bedingung wahr ist.  
+  Beispiel:  
+  ```
+  WHILE (x < 100) DO
+      INC x
+  LOOP
+  ```
+
+### Sprungbefehle
+
+- **`GOTO <label>`**  
+  Springt zu einem Label.  
+  Beispiel: `GOTO end`
+
+- **`GOSUB <label>` / `RETURN`**  
+  Ruft eine Subroutine auf und kehrt zurück.  
+  Beispiel:  
+  ```
+  GOSUB drawScreen
+  END
+
+  @drawScreen
+  CLS
+  RETURN
+  ```
+
+---
+
+## Grafik- und Eingabebefehle
+
+GeoCom unterstützt GEOS-Grafikfunktionen und Mausinteraktionen.
+
+### Grafikbefehle
+
+- **`CLS`**  
+  Löscht den Bildschirm.
+
+- **`SETPOS <x>, <y>`**  
+  Setzt die Cursorposition (x: 0-319, y: 0-199).  
+  Beispiel: `SETPOS 100, 50`
+
+- **`PRINT <expression> [;]`**  
+  Gibt Text oder Variablen aus. Mit `;` bleibt der Cursor in der Zeile.  
+  Stil-Escapes: `/B` (fett), `/P` (normal), `/I` (kursiv), `/U` (unterstrichen).  
+  Beispiel: `PRINT "/BHello/P World";`
+
+- **`RECT <x1>, <y1>, <x2>, <y2>`**  
+  Zeichnet ein gefülltes Rechteck.  
+  Beispiel: `RECT 50, 50, 150, 100`
+
+- **`FRAME <x1>, <y1>, <x2>, <y2>, <pattern>`**  
+  Zeichnet einen Rahmen mit Muster (0-255).  
+  Beispiel: `FRAME 10, 10, 200, 50, 255`
+
+- **`PATTERN <value>`**  
+  Setzt das Füllmuster (0-255).  
+  Beispiel: `PATTERN 170`
+
+### Eingabebefehle
+
+- **`MOUSE ON`**  
+  Aktiviert die Mausunterstützung.
+
+- **`REGION <x1>, <y1>, <x2>, <y2>`**  
+  Prüft, ob der Mauszeiger im Bereich ist (Rückgabewert: 1 = ja, 0 = nein).  
+  Beispiel: `IF (REGION 100, 50, 200, 80) THEN`
+
+- **`INPUT <string_var>`**  
+  Liest Benutzereingabe in einen String.  
+  Beispiel: `INPUT name`
+
+---
+
+## GEOS-spezifische Funktionen
+
+- **`CALL <address>`**  
+  Ruft eine GEOS-Routine an einer Speicheradresse auf.  
+  Beispiel: `CALL $c187` (GetRandom)
+
+- **`VLIR <command>`**  
+  Arbeitet mit VLIR-Dateien (Variable Length Index Record).  
+  Beispiel: `VLIR LOAD "datafile"`
+
+- **`MAINLOOP`**  
+  Startet die Hauptereignisschleife für GEOS-Events.
+
+- **`LOW(<expression>)`**  
+  Gibt das untere Byte eines 16-Bit-Werts zurück.  
+  Beispiel: `byte = (LOW(word))`
+
+---
+
+## Befehlsreferenz
+
+Hier eine alphabetische Liste der wichtigsten Befehle:
+
+| Befehl            | Beschreibung                                      | Beispiel                             |
+|-------------------|--------------------------------------------------|--------------------------------------|
+| `CALL <addr>`     | Ruft GEOS-Routine auf                           | `CALL $c187`                        |
+| `CLS`             | Löscht den Bildschirm                           | `CLS`                               |
+| `END`             | Beendet das Programm                            | `END`                               |
+| `FRAME`           | Zeichnet einen Rahmen                           | `FRAME 10, 10, 100, 50, 255`        |
+| `GOSUB <label>`   | Ruft eine Subroutine auf                        | `GOSUB draw`                        |
+| `GOTO <label>`    | Springt zu einem Label                          | `GOTO start`                        |
+| `IF ... THEN`     | Bedingte Ausführung                            | `IF (x > 0) THEN`                   |
+| `INC <var>`       | Erhöht eine Variable um 1                      | `INC counter`                       |
+| `INPUT <var>`     | Liest Benutzereingabe                           | `INPUT name`                        |
+| `MOUSE ON`        | Aktiviert Mausunterstützung                    | `MOUSE ON`                          |
+| `PRINT <expr>`    | Gibt Text oder Werte aus                       | `PRINT "Hallo";`                    |
+| `RECT`            | Zeichnet ein Rechteck                          | `RECT 50, 50, 150, 100`             |
+| `REGION`          | Prüft Mausposition                             | `IF (REGION 10, 10, 50, 50) THEN`   |
+| `REPEAT ... UNTIL`| Schleife bis Bedingung erfüllt                 | `REPEAT ... UNTIL (x = 5)`          |
+| `RETURN`          | Rückkehr aus Subroutine                        | `RETURN`                            |
+| `SETPOS <x>, <y>` | Setzt Cursorposition                           | `SETPOS 100, 100`                   |
+| `WHILE ... LOOP`  | Schleife solange Bedingung wahr                | `WHILE (x < 10) DO ... LOOP`        |
+
+---
+
+## Beispiele
+
+### Beispiel 1: Zufallsgenerator
+
+```geoCom
+` Definition Section
+NAME "randomGen"
+CLASS "rand       1.0"
+AUTHOR "Cenbe"
+
+` Declaration Section
+INTVAR random AT $850a
+BYTEVAR result
+STRVAR 64; output
+LABEL roll, display
+
+` Command Section
+CLS
+GOSUB roll
+output = ("Ergebnis: " + (STR result))
+GOSUB display
+END
+
+@roll
+CALL $c187 ` GEOS GetRandom
+result = (LOW(((random - 1) / 43) + 1)) ` 1-6
+RETURN
+
+@display
+SETPOS 100, 100
+PRINT output;
+RETURN
+```
+
+### Beispiel 2: Interaktives Menü
+
+```geoCom
+` Definition Section
+NAME "menu"
+CLASS "menu       1.0"
+AUTHOR "Cenbe"
+
+` Declaration Section
+BYTEVAR mousedata AT $84c0
+BYTEVAR choice
+LABEL draw_menu, check_input
+
+` Command Section
+CLS
+choice = 0
+MOUSE ON
+GOSUB draw_menu
+MAINLOOP
+
+@draw_menu
+FRAME 50, 50, 150, 80, 255
+SETPOS 60, 60
+PRINT "Option 1";
+FRAME 50, 90, 150, 120, 255
+SETPOS 60, 100
+PRINT "Option 2";
+RETURN
+
+@check_input
+IF ((mousedata AND $80) <> 0): RETURN: ENDIF
+IF (REGION 50, 50, 150, 80) THEN
+    choice = 1
+    CLS
+    SETPOS 100, 100
+    PRINT "Option 1 gewählt";
+ENDIF
+IF (REGION 50, 90, 150, 120) THEN
+    choice = 2
+    CLS
+    SETPOS 100, 100
+    PRINT "Option 2 gewählt";
+ENDIF
+RETURN
+```
+
+---
+
+## Anmerkungen und Einschränkungen
+
+- **Speicher**: Standardmäßig 14 KB verfügbar (siehe "memory map" im Handbuch).
+- **Fehlerbehandlung**: Der Compiler generiert eine Fehlerliste, aber es gibt keinen interaktiven Debugger.
+- **Hardware**: Keine Unterstützung für uIEC-Laufwerke.
+- **Subroutinen**: Keine Parameter oder Rückgabewerte möglich.
