@@ -1,0 +1,20 @@
+# Build artifacts
+cc65/build/
+*.prg
+
+# Disk images
+disks/*.d64
+
+# Temporary files
+*.tmp
+*.bak
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/settings.json
+*.code-workspace
+
+# Logs
+*.log
